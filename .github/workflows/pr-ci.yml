@@ -46,10 +46,6 @@ jobs:
   checkout-branch: 
     runs-on: ubuntu-latest
     needs: [check-before-build]
-    permissions:
-      contents: read
-      issues: read
-      pull-requests: read
     outputs: 
       PR_head_ref: ${{ fromJSON(steps.comment-branch.outputs.result).ref }}
       PR_head_sha: ${{ fromJSON(steps.comment-branch.outputs.result).sha }}
@@ -87,15 +83,18 @@ jobs:
 
   push-to-ghcr:
     runs-on: ubuntu-latest
+    needs: [build-and-test, checkout-branch]
     strategy:
       matrix:
         arch: [amd64, arm64]
     outputs: 
       amd64_image: ${{ steps.amd64_image.outputs.image }}
       arm64_image: ${{ steps.arm64_image.outputs.image }}
-    needs: [build-and-test, checkout-branch]
     env:
       head_sha: ${{ needs.checkout-branch.outputs.PR_head_sha }}
+    permissions:
+      packages: write
+      actions: read
     steps:
     - uses: actions/download-artifact@v3
       with:
